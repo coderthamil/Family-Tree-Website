@@ -19,12 +19,8 @@ target_metadata = Base.metadata
 from app.config import get_settings
 settings = get_settings()
 
-# Convert asyncpg URL → sync psycopg2-style for Alembic migrations
 # Alembic itself runs synchronously; only the app uses async
-sync_url = (
-    settings.DATABASE_URL
-    .replace("postgresql+asyncpg://", "postgresql://")
-)
+sync_url = settings.sync_database_url
 
 
 def run_migrations_offline() -> None:
