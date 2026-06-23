@@ -1,0 +1,53 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor config
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Environment variables & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Docker local data
+postgres_data/
+
+# Backend (Python / FastAPI)
+backend/venv/
+backend/.venv/
+backend/__pycache__/
+backend/**/*.py[cod]
+backend/**/$py.class
+backend/uploads/
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/dist/
+backend/build/
+backend/*.egg-info/
+backend/app.db
+backend/test.db
+backend/alembic.ini.bak
+
+# Frontend (Node / React / Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+frontend/.eslintcache
+frontend/src/.tmp/
+
+# Scratch & Temporary folders
+scratch/
