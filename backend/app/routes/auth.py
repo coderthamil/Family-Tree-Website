@@ -33,9 +33,19 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
+    print(f"[DEBUG-LOGIN] Received login request for username: '{payload.username}'")
+    
     result = await db.execute(select(User).where(User.username == payload.username))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(payload.password, user.hashed_password):
+    
+    if not user:
+        print(f"[DEBUG-LOGIN] User '{payload.username}' not found in the database.")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        
+    is_valid = verify_password(payload.password, user.hashed_password)
+    print(f"[DEBUG-LOGIN] User found. Hashed password in DB: {user.hashed_password}. Match result: {is_valid}")
+    
+    if not is_valid:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
     token = create_access_token({"sub": str(user.id)})
