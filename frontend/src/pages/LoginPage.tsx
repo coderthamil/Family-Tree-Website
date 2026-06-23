@@ -22,7 +22,9 @@ export default function LoginPage() {
       toast.success(`Welcome back, ${res.data.user.full_name || username}!`)
       navigate('/tree')
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Invalid credentials')
+      console.error('Login error:', err);
+      const errorMessage = err.response?.data?.detail || err.message || 'Invalid credentials';
+      toast.error(errorMessage);
     } finally {
       setLoading(false)
     }
