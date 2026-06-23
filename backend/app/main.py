@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 
 from app.config import get_settings
 from app.database import engine
@@ -154,3 +154,38 @@ async def custom_swagger_ui():
 @app.get("/health", tags=["Health"])
 async def health():
     return {"status": "ok"}
+
+
+# ── Serve frontend static files in production ────────────────────────────────
+static_path = Path("static")
+if static_path.exists():
+    app.mount("/", StaticFiles(directory=str(static_path), html=True), name="static")
+
+
+@app.exception_handler(404)
+async def custom_404_handler(request, exc):
+    path = request.url.path
+    # Do not serve index.html for API, docs, or upload routes
+    if path.startswith((
+        "/auth",
+        "/persons",
+        "/families",
+        "/tree",
+        "/import",
+        "/relationships",
+        "/timeline",
+        "/export",
+        "/admin",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/health",
+        "/uploads"
+    )):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+
+    static_index = Path("static/index.html")
+    if static_index.exists():
+        return FileResponse(static_index)
+    return HTMLResponse("Not Found", status_code=404)
