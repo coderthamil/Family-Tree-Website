@@ -42,5 +42,5 @@ COPY --from=frontend-builder /frontend/dist ./static
 EXPOSE 8000
 ENV PORT=8000
 
-# Start the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the application (run migrations, seed admin user, and start server)
+CMD ["sh", "-c", "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
