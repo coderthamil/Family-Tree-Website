@@ -33,23 +33,39 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
-    print(f"[DEBUG-LOGIN] Received login request for username: '{payload.username}'")
-    
-    result = await db.execute(select(User).where(User.username == payload.username))
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        print(f"[DEBUG-LOGIN] User '{payload.username}' not found in the database.")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    try:
+        print(f"[DEBUG-LOGIN] Received login request for username: '{payload.username}'")
         
-    is_valid = verify_password(payload.password, user.hashed_password)
-    print(f"[DEBUG-LOGIN] User found. Hashed password in DB: {user.hashed_password}. Match result: {is_valid}")
-    
-    if not is_valid:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        result = await db.execute(select(User).where(User.username == payload.username))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            print(f"[DEBUG-LOGIN] User '{payload.username}' not found.")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+            
+        is_valid = verify_password(payload.password, user.hashed_password)
+        print(f"[DEBUG-LOGIN] User found. Hashed password: {user.hashed_password}. Match: {is_valid}")
+        
+        if not is_valid:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    token = create_access_token({"sub": str(user.id)})
-    return TokenResponse(access_token=token, user=UserRead.model_validate(user))
+        token = create_access_token({"sub": str(user.id)})
+        
+        try:
+            user_data = UserRead.model_validate(user)
+        except Exception as val_err:
+            print(f"[DEBUG-LOGIN] Serialization validation failed: {val_err}")
+            raise HTTPException(status_code=500, detail=f"Pydantic Validation Error: {str(val_err)}")
+            
+        return TokenResponse(access_token=token, user=user_data)
+        
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[DEBUG-LOGIN] Login failed with exception:\n{tb}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}\n{tb}")
 
 
 @router.get("/me", response_model=UserRead)
